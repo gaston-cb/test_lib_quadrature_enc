@@ -1,12 +1,29 @@
 #include "quadrature_encoders.h"
-#include <string.h>
-#include "gpio.h"
-
 #ifndef TEST
+    #define TEST_STATIC static
     #include "hardware/clocks.h"
     #include "hardware/timer.h"
-#endif
+#else 
+    #define TEST_STATIC 
 
+    #include <string.h>
+    #include "gpio.h"
+    #include "timer.h"
+#endif
+typedef unsigned int uint ;  
+typedef struct repeating_timer repeating_timer_t;
+typedef bool (*repeating_timer_callback_t)(repeating_timer_t *rt);
+
+//typedef struct alarm_pool alarm_pool_t;
+
+
+struct repeating_timer {
+    int64_t delay_us;
+    //alarm_pool_t *pool;
+    //alarm_id_t alarm_id;
+    repeating_timer_callback_t callback;
+    void *user_data;
+};
 
 
 // internal functions ! 
@@ -17,40 +34,42 @@ static void read_state() ;
 
 
 /// @brief internal variables- > method is oo for C 
-static encoder_quad_t encoder ;
-static volatile uint8_t count_state  = 0  ; 
-static volatile uint16_t _port_channel_a = 0 ; 
-static volatile uint16_t _port_channel_b = 0; 
-static volatile uint64_t clock_speed ; 
+
+TEST_STATIC encoder_quad_t encoder ;
+TEST_STATIC volatile uint8_t count_state  = 0  ; 
+TEST_STATIC volatile uint16_t _port_channel_a = 0 ; 
+TEST_STATIC volatile uint16_t _port_channel_b = 0; 
+TEST_STATIC volatile uint64_t clock_speed ; 
 static struct repeating_timer timer0 ; 
 
 
-
-bool alarma(struct repeating_timer *t){
-    read_state() ; 
-    return true  ; 
-}
-
+#ifndef TEST 
+    bool alarma(struct repeating_timer *t){
+        read_state() ; 
+        return true  ; 
+    }
+#endif
 
 void initPorts(uint port_channel_a, uint port_channel_b){
     ///FIXME: manejar errores de canales a,b asociados a puertos 
     ///       review of registers ! 
     _port_channel_a = port_channel_a     ; 
     _port_channel_b = port_channel_b     ; 
-    gpio_init(_port_channel_a)          ;
-    gpio_set_dir(_port_channel_a,false) ; 
-    gpio_pull_up(_port_channel_a) ; 
-    gpio_init(_port_channel_b)  ;
-    gpio_set_dir(_port_channel_b,false) ; 
-    gpio_pull_up(_port_channel_b) ;     
-    encoder.state = ((uint8_t)(gpio_get(_port_channel_a)<<1) |  gpio_get(_port_channel_b)) ; 
-    gpio_set_irq_enabled(_port_channel_a,GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE  ,true) ; 
-    gpio_set_irq_enabled(_port_channel_b,GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE  ,true) ; 
-    gpio_set_irq_callback(&gpio_callback_channel_ab);     
-
-    irq_set_enabled(IO_IRQ_BANK0, true);
-    //timer0.alarm_id = 0 ; 
-    bool ms_al =  add_repeating_timer_ms((int32_t) 800,&alarma, NULL, &timer0 ) ; 
+   gpio_init(_port_channel_a)          ;
+   gpio_set_dir(_port_channel_a,false) ; 
+   gpio_pull_up(_port_channel_a) ; 
+   gpio_init(_port_channel_b)  ;
+   gpio_set_dir(_port_channel_b,false) ; 
+   gpio_pull_up(_port_channel_b) ;     
+   encoder.state = ((uint8_t)(gpio_get(_port_channel_a)<<1) |  gpio_get(_port_channel_b)) ; 
+//    gpio_set_irq_enabled(_port_channel_a,GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE  ,true) ; 
+//    gpio_set_irq_enabled(_port_channel_b,GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE  ,true) ; 
+//    gpio_set_irq_callback(&gpio_callback_channel_ab);     
+//    irq_set_enabled(13, true);
+    // //timer0.alarm_id = 0 ; 
+#ifndef TEST
+   // bool ms_al =  add_repeating_timer_ms((int32_t) 800,&alarma, NULL, &timer0 ) ; 
+#endif
     ///FIXME: ASSERT IF MS_AL == FALSE ! 
 } 
  
