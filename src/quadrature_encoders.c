@@ -62,10 +62,10 @@ void initPorts(uint port_channel_a, uint port_channel_b){
    gpio_set_dir(_port_channel_b,false) ; 
    gpio_pull_up(_port_channel_b) ;     
    encoder.state = ((uint8_t)(gpio_get(_port_channel_a)<<1) |  gpio_get(_port_channel_b)) ; 
-//    gpio_set_irq_enabled(_port_channel_a,GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE  ,true) ; 
-//    gpio_set_irq_enabled(_port_channel_b,GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE  ,true) ; 
-//    gpio_set_irq_callback(&gpio_callback_channel_ab);     
-//    irq_set_enabled(13, true);
+   gpio_set_irq_enabled(_port_channel_a,GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE  ,true) ; 
+   gpio_set_irq_enabled(_port_channel_b,GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE  ,true) ; 
+   gpio_set_irq_callback(&gpio_callback_channel_ab);     
+   irq_set_enabled(13, true);
     // //timer0.alarm_id = 0 ; 
 #ifndef TEST
    // bool ms_al =  add_repeating_timer_ms((int32_t) 800,&alarma, NULL, &timer0 ) ; 
@@ -297,8 +297,8 @@ void fsm_encoder(const state_quad_enc_t new_state){
 
 
 
-static void gpio_callback_channel_ab(uint gpio,uint32_t event_mask ) { 
-    uint8_t new_state ; 
+TEST_STATIC void gpio_callback_channel_ab(uint gpio,uint32_t event_mask ) { 
+    volatile uint8_t new_state ; 
   
     if (gpio == _port_channel_a){
         new_state = gpio_get(_port_channel_b) ; 

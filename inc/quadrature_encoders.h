@@ -4,7 +4,7 @@
     typedef unsigned int uint;
     #include <stdint.h>
     #include <stdbool.h>
-
+    
 #endif
 
 // Configuracion vieja
@@ -51,5 +51,4 @@ void initPorts(uint channel_a, uint channel_b);
 void setZero(); 
 void set90();
 void getData(encoder_quad_t *quadrature_enc); 
-
 
