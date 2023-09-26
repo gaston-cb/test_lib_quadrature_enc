@@ -1,9 +1,11 @@
 #include "unity.h" 
 
+#include "irq_gpio.c"
 #include "mock_gpio.h"
 #include "mock_timer.h"
 
-#include "irq_gpio.c"
+typedef unsigned int uint;
+
 #define PORTA 10
 #define PORTB 11
 extern uint8_t count_state  ; 
@@ -41,11 +43,55 @@ void test_zero_position(void){
  *                                                *                  
 ***************************************************/
 
-///test de dirección inicial cw
-void test_initial_direction_cw(void){ 
+///test de estado inicial
+void test_initial_state(void){ 
+    initialState(STATE_00) ; 
     setZero() ; // pongo pulsos a cero 
+    // state 00 initial test 
+    get_data_encoder(&encoder_test) ;  
+    TEST_ASSERT_EQUAL(encoder_test.state, STATE_00) ;
+    // state 01 initial test 
+    initialState(STATE_01) ; 
+    get_data_encoder(&encoder_test) ;  
+    TEST_ASSERT_EQUAL(encoder_test.state, STATE_01) ;
+    // state 10 initial test 
+    initialState(STATE_10) ; 
+    get_data_encoder(&encoder_test) ;  
+    TEST_ASSERT_EQUAL(encoder_test.state, STATE_10) ;
+
+    // state 11 initial test 
+    initialState(STATE_11) ; 
+    get_data_encoder(&encoder_test) ;  
+    TEST_ASSERT_EQUAL(encoder_test.state, STATE_11) ;
+
 
 }
+extern uint8_t new_state_test ; 
+/// inicio estado 00 -> 10 --> still inicio
+void test_direction_cw(void){ 
+
+    //setPortsInit(PORTA,PORTB) ; 
+    setPortsInit(10 ,11) ; // a = 10, b= 11 
+    initialState(STATE_00) ; 
+    
+    setZero() ; // pongo pulsos a cero 
+//    TEST_ASSERT_EQUAL(encoder_test.state, STATE_00) ; 
+    gpio_get_ExpectAndReturn(11,0) ; 
+    time_us_64_IgnoreAndReturn(35) ; 
+    //gpio_get_ExpectAndReturn(11u,1u) ; 
+    
+    gpio_callback_channel_ab(10,(uint32_t)8); 
+    get_data_encoder(&encoder_test) ;  
+
+    TEST_ASSERT_EQUAL(new_state_test, 2) ; 
+    TEST_ASSERT_EQUAL(encoder_test.state, STATE_10) ; 
+//    TEST_ASSERT_EQUAL(encoder_test.direction, COUNTER_STILL); 
+//    TEST_ASSERT_EQUAL(count_state,0) ; 
+    
+
+
+}
+
 
 
 

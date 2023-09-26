@@ -8,18 +8,26 @@
 
 
 static encoder_quad_t encoder ;
-uint16_t _port_channel_a ; 
-uint16_t _port_channel_b ; 
+static uint _port_channel_a ; 
+static uint _port_channel_b ; 
 uint64_t clock_speed ; 
 uint8_t count_state = 0 ; 
+uint8_t new_state_test ;  
 
-
-void setPortsInit(uint16_t port_a, uint16_t port_b){ 
+void setPortsInit(uint port_a, uint port_b){ 
      _port_channel_a = port_a ; 
      _port_channel_a = port_b ; 
      
 }
 
+/// @brief  test initial function 
+/// @param initialstate 
+
+void initialState( state_quad_enc_t initialstate){ 
+    encoder.state = initialstate ; 
+
+
+}
 
 void setZero(){
     encoder.angle = 0;
@@ -42,7 +50,7 @@ static void fsm_encoder(const state_quad_enc_t new_state){
     switch(encoder.state){
         case STATE_00:           
             if (new_state == STATE_10){
-                encoder.state = new_state ; 
+                encoder.state = STATE_10 ; 
                 if (encoder.direction == COUNTER_STILL){
                     clock_speed = time_us_64() ; 
                     encoder.direction = COUNTER_CLOCKWISE ; 
@@ -191,7 +199,7 @@ static void fsm_encoder(const state_quad_enc_t new_state){
                     encoder.speed = (1.0/(float) clock_speed) *CONVERSION_PULSES_FACTOR ; 
                     count_state =0 ; 
                     encoder.count_pulses++ ; 
-                    //encoder.count_pulses = (encoder.count_pulses + MAX_COUNT_PULSES_PER_REV)%MAX_COUNT_PULSES_PER_REV ; 
+                    encoder.count_pulses = (encoder.count_pulses + MAX_COUNT_PULSES_PER_REV)%MAX_COUNT_PULSES_PER_REV ; 
                     encoder.angle = encoder.count_pulses*CONVERSION_PULSES_FACTOR ; 
                     clock_speed = time_us_64() ; 
 
@@ -232,25 +240,34 @@ static void fsm_encoder(const state_quad_enc_t new_state){
 
 void gpio_callback_channel_ab(uint gpio,uint32_t event_mask ) { 
     volatile uint8_t new_state ; 
-  
-    if (gpio == _port_channel_a){
-        new_state = gpio_get(_port_channel_b) ; 
+    new_state_test = 25 ; 
+    if (gpio == 10){
+        new_state = gpio_get(11) ; 
+        new_state_test = 11 ; 
         if (event_mask == GPIO_IRQ_EDGE_FALL){ 
+            new_state_test = 1 ; 
             new_state = 0<<1 | new_state; 
         }else if(event_mask == GPIO_IRQ_EDGE_RISE) {
-            new_state = 1<<1 | new_state; 
+            new_state = 1<<1 | new_state ; 
+            new_state_test = 2           ; 
         }
 
-    }else if (gpio == _port_channel_b){
-        new_state =  gpio_get(_port_channel_a)<<1 ; 
+    }else if (gpio ==  11){
+        new_state =  gpio_get(10)<<1 ; 
         if (event_mask == GPIO_IRQ_EDGE_FALL){ 
             new_state = new_state | 0 ; 
+            new_state_test = 3 ; 
+
         }else if(event_mask == GPIO_IRQ_EDGE_RISE) {        
             new_state = new_state | 1 ; 
+            new_state_test = 4 ; 
+
         }
-
-
-    }else return ; 
+    }else{ 
+        new_state_test = 33 ; 
+        return ;
+    }
+   //new_state_test = new_state ; 
     ///FIXME: CHANGE FOR A QUEUE 
     fsm_encoder(new_state);  
 }
