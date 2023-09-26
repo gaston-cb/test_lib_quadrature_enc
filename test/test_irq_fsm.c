@@ -71,7 +71,7 @@ extern uint8_t new_state_test ;
 void test_direction_cw(void){ 
 
     //setPortsInit(PORTA,PORTB) ; 
-    setPortsInit(10 ,11) ; // a = 10, b= 11 
+    setPortsInit(PORTA ,11) ; // a = 10, b= 11 
     initialState(STATE_00) ; 
     
     setZero() ; // pongo pulsos a cero 
@@ -80,7 +80,7 @@ void test_direction_cw(void){
     time_us_64_IgnoreAndReturn(35) ; 
     //gpio_get_ExpectAndReturn(11u,1u) ; 
     
-    gpio_callback_channel_ab(10,(uint32_t)8); 
+    gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_RISE); 
     get_data_encoder(&encoder_test) ;  
 
     TEST_ASSERT_EQUAL(new_state_test, 2) ; 
