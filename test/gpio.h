@@ -672,7 +672,7 @@ void gpio_init_mask(unsigned int gpio_mask);
  * \param gpio GPIO number
  * \return Current state of the GPIO. 0 for low, non-zero for high
  */
-bool gpio_get(unsigned int gpio) ; 
+bool gpio_get(uint gpio) ; 
 
 /*! \brief Get raw value of all GPIOs
  *  \ingroup hardware_gpio

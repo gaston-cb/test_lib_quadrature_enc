@@ -1,10 +1,9 @@
 #include "unity.h" 
 
-#include "irq_gpio.c"
 #include "mock_gpio.h"
 #include "mock_timer.h"
+#include "irq_gpio.h"
 
-typedef unsigned int uint;
 
 #define PORTA 10
 #define PORTB 11
@@ -19,8 +18,14 @@ enum gpio_irq_level events_irq[4] = {
 
 
 void test_init_ports(void) {
-    setPortsInit(PORTA,PORTB) ; 
+    setPortsInit(PORTA,PORTB) ;
+    //uint pa =  get_porta() ; 
+    //uint pb =  get_portb() ; 
+    
     TEST_ASSERT_EQUAL(0,count_state); 
+    TEST_ASSERT_EQUAL(PORTA,get_porta()); 
+    TEST_ASSERT_EQUAL(PORTB,get_portb()); 
+    
 }
 
 
@@ -43,7 +48,7 @@ void test_zero_position(void){
  *                                                *                  
 ***************************************************/
 
-///test de estado inicial
+/// test de estado inicial en cualquier estado 
 void test_initial_state(void){ 
     initialState(STATE_00) ; 
     setZero() ; // pongo pulsos a cero 
@@ -66,33 +71,59 @@ void test_initial_state(void){
 
 
 }
-extern uint8_t new_state_test ; 
-/// inicio estado 00 -> 10 --> still inicio
-void test_direction_cw(void){ 
 
-    //setPortsInit(PORTA,PORTB) ; 
-    setPortsInit(PORTA ,11) ; // a = 10, b= 11 
+/********************************************
+ * ESTADO DE MOVIMIENTO EN SENTIDO HORARIO  *
+ * TEST DE FSM EN ESTE SENTIDO              *
+ ********************************************/
+
+//  
+// inicio estado 00 -> 10
+//
+void test_direction_cw_st0010(void){ 
+    gpio_get_ExpectAndReturn((uint)PORTB,0) ; 
+    time_us_64_IgnoreAndReturn(35) ;    
+
+    setPortsInit(PORTA ,PORTB) ; // a = 10, b= 11 
     initialState(STATE_00) ; 
-    
     setZero() ; // pongo pulsos a cero 
-//    TEST_ASSERT_EQUAL(encoder_test.state, STATE_00) ; 
-    gpio_get_ExpectAndReturn(11,0) ; 
-    time_us_64_IgnoreAndReturn(35) ; 
-    //gpio_get_ExpectAndReturn(11u,1u) ; 
-    
-    gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_RISE); 
+    gpio_callback_channel_ab((uint)PORTA,(uint32_t)GPIO_IRQ_EDGE_RISE); 
     get_data_encoder(&encoder_test) ;  
-
-    TEST_ASSERT_EQUAL(new_state_test, 2) ; 
-    TEST_ASSERT_EQUAL(encoder_test.state, STATE_10) ; 
-//    TEST_ASSERT_EQUAL(encoder_test.direction, COUNTER_STILL); 
-//    TEST_ASSERT_EQUAL(count_state,0) ; 
-    
-
-
+    TEST_ASSERT_EQUAL(STATE_10,encoder_test.state) ; 
+    TEST_ASSERT_EQUAL(encoder_test.direction, COUNTER_CLOCKWISE); 
+    TEST_ASSERT_EQUAL(count_state,1) ; 
 }
 
 
+void test_direction_cw_st1011(void){
+    gpio_get_ExpectAndReturn((uint)PORTA,true) ; 
+    time_us_64_IgnoreAndReturn(35) ;    
+    setPortsInit(PORTA ,PORTB) ; // a = 10, b= 11 0
+    initialState(STATE_10) ; 
+    setZero() ; // pongo pulsos a cero 
+   
+    gpio_callback_channel_ab((uint)PORTB,(uint32_t)GPIO_IRQ_EDGE_RISE); 
+    get_data_encoder(&encoder_test) ;  
+    TEST_ASSERT_EQUAL(encoder_test.state, STATE_11) ; 
+    TEST_ASSERT_EQUAL(encoder_test.direction, COUNTER_CLOCKWISE); 
+    TEST_ASSERT_EQUAL(count_state,1) ; 
+}
+
+
+
+void test_direction_cw_st1101(void){ 
+    gpio_get_ExpectAndReturn(PORTB,1) ; 
+    time_us_64_IgnoreAndReturn(35) ;    
+
+    setPortsInit(PORTA ,PORTB) ; // a = 10, b= 11 
+    initialState(STATE_11) ; 
+    setZero() ; // pongo pulsos a cero 
+    gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_FALL); 
+    get_data_encoder(&encoder_test) ;  
+    TEST_ASSERT_EQUAL(encoder_test.state, STATE_01) ; 
+    TEST_ASSERT_EQUAL(encoder_test.direction, COUNTER_CLOCKWISE); 
+    TEST_ASSERT_EQUAL(count_state,1) ; 
+}
 
 
 
