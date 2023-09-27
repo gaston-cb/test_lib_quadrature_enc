@@ -17,9 +17,11 @@
   :default_tasks:
     - test:all
 
-#:test_build:
-#  :use_assembly: TRUE
 
+# :test_build:
+#   :use_assembly: FALSE
+#   :defines:
+#     prefix: '-D' 
 #:release_build:
 #  :output: MyApp.out
 #  :use_assembly: FALSE
@@ -45,6 +47,8 @@
   #  1) remove the trailing [] from the :common: section
   #  2) add entries to the :common: section (e.g. :test: has TEST defined)
   :common: &common_defines []
+#    -  CMOCK_MEM_DYNAMIC
+#    -  CMOCK_MEM_STATIC=1024*1024
   :test:
     - *common_defines
     - TEST
@@ -58,7 +62,7 @@
   :enforce_strict_ordering: TRUE
   :plugins:
     - :ignore
-    #- :ignore_arg
+    - :ignore_arg
     - :array
     - :callback
     - :expect
