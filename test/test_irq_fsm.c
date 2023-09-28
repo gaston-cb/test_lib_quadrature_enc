@@ -3,8 +3,17 @@
 #include "mock_timer.h"
 #include "irq_gpio.h"
 
-#define PULSES_COUNT_CW 1756
-#define PULSES_COUNT_CCW 1800 
+/// define a test for a complete turn encoder  
+#define PULSES_COUNT_CW 580
+#define PULSES_COUNT_CCW 1755 
+
+
+
+/// define a test for a complete turn encoder  
+#define PULSES_COUNT_CW2 580
+#define PULSES_COUNT_CCW2 250 
+
+
 
 #define PORTA 10
 #define PORTB 11
@@ -28,9 +37,6 @@ void test_init_ports(void) {
     TEST_ASSERT_EQUAL(PORTB,get_portb()); 
     
 }
-
-
-
 
 /// test posicion cero  
 void test_zero_position(void){ 
@@ -108,7 +114,6 @@ void test_direction_cw_st1011(void){
     TEST_ASSERT_EQUAL(count_state,1) ; 
 }
 
-
 void test_direction_cw_st1101(void){ 
     //gpio_get_ExpectAndReturn(PORTB,1) ; 
     //time_us_64_IgnoreAndReturn(35) ;    
@@ -124,7 +129,6 @@ void test_direction_cw_st1101(void){
     TEST_ASSERT_EQUAL(encoder_test.direction, COUNTER_CLOCKWISE); 
     TEST_ASSERT_EQUAL(count_state,1) ; 
 }
-
 
 void test_direction_cw_st0100(void){ 
     gpio_get_ExpectAndReturn(PORTA,0) ; 
@@ -341,7 +345,7 @@ void test_direction_ccw_sttransition_initial(void){
 
 }
 
-/// test de vuelta completa en sentido ccw 
+//// test de vuelta completa en sentido ccw 
 //// distintos test con distintos valores iniciales de st 
 void test_count_pulses_ccw_sti00(void){ 
     int16_t pulses = (int16_t)PULSES_COUNT_CCW ; 
@@ -450,40 +454,105 @@ void test_count_pulses_ccw_sti11(void){
     TEST_ASSERT_EQUAL(STATE_11,encoder_test.state) ; 
 }
 
+void test_count_pulses_ccw_sti10(void){
+    int16_t pulses = (int16_t)PULSES_COUNT_CCW ; 
+    int16_t count_pulses ; 
+    time_us_64_IgnoreAndReturn(35) ;        
+    initialState(STATE_10)  ;   /// generate pulses 
+    setPortsInit(PORTA,PORTB) ; 
+    setZero() ; 
+    for (count_pulses = 0; count_pulses<pulses;count_pulses++){ 
+        // 10 TO 00 
+        gpio_get_ExpectAndReturn(PORTB,0) ;
+        time_us_64_IgnoreAndReturn(35) ;    
+        gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_FALL); 
+        // 00 TO 01 
+        gpio_get_ExpectAndReturn(PORTA,0) ; 
+        time_us_64_IgnoreAndReturn(35) ;    
+        gpio_callback_channel_ab(PORTB,(uint32_t)GPIO_IRQ_EDGE_RISE); 
+        //01 TO 11 
+        gpio_get_ExpectAndReturn(PORTB,1) ; 
+        time_us_64_IgnoreAndReturn(35) ;    
+        gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_RISE); 
+        //11 TO 10 
+        gpio_get_ExpectAndReturn(PORTA,1) ; 
+        time_us_64_IgnoreAndReturn(35) ;    
+        gpio_callback_channel_ab(PORTB,(uint32_t)GPIO_IRQ_EDGE_FALL); 
+        resetTest() ;  ///clear memory test 
+    }
+    count_pulses = count_pulses%MAX_COUNT_PULSES_PER_REV; 
+    get_data_encoder(&encoder_test)   ; 
+    TEST_ASSERT_EQUAL(
+       (MAX_COUNT_PULSES_PER_REV-count_pulses)%MAX_COUNT_PULSES_PER_REV,encoder_test.count_pulses) ; 
+    TEST_ASSERT_EQUAL(COUNTER_ANTICLOCKWISE,encoder_test.direction) ;
+    TEST_ASSERT_EQUAL(count_state,0) ; 
+    TEST_ASSERT_EQUAL(STATE_10,encoder_test.state) ; 
+}
 
-// void test_count_pulses_ccw_sti10(void){
-//     int16_t pulses = (int16_t)PULSES_COUNT_CCW ; 
-//     int16_t count_pulses ; 
-//     time_us_64_IgnoreAndReturn(35) ;        
-//     initialState(STATE_10)  ;   /// generate pulses 
-//     setPortsInit(PORTA,PORTB) ; 
-//     setZero() ; 
-//     for (count_pulses = 0; count_pulses<pulses;count_pulses++){ 
-//         // 10 TO 00 
-//         gpio_get_ExpectAndReturn(PORTA,1) ;
-//         time_us_64_IgnoreAndReturn(35) ;    
-//         gpio_callback_channel_ab(PORTB,(uint32_t)GPIO_IRQ_EDGE_FALL); 
-//         // 00 TO 01 
-//         gpio_get_ExpectAndReturn(PORTB,0) ; 
-//         time_us_64_IgnoreAndReturn(35) ;    
-//         gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_FALL); 
-//         //01 TO 11 
-//         gpio_get_ExpectAndReturn(PORTA,0) ; 
-//         time_us_64_IgnoreAndReturn(35) ;    
-//         gpio_callback_channel_ab(PORTB,(uint32_t)GPIO_IRQ_EDGE_RISE); 
-//         //11 TO 10 
-//         gpio_get_ExpectAndReturn(PORTB,1) ; 
-//         time_us_64_IgnoreAndReturn(35) ;    
-//         gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_RISE); 
-//         resetTest() ;  ///clear memory test 
-//     }
-//     count_pulses = count_pulses%MAX_COUNT_PULSES_PER_REV; 
-//     get_data_encoder(&encoder_test)   ; 
-//     TEST_ASSERT_EQUAL(
-//        (MAX_COUNT_PULSES_PER_REV-count_pulses)%MAX_COUNT_PULSES_PER_REV,encoder_test.count_pulses) ; 
-//     TEST_ASSERT_EQUAL(COUNTER_ANTICLOCKWISE,encoder_test.direction) ;
-//     TEST_ASSERT_EQUAL(count_state,0) ; 
-//     TEST_ASSERT_EQUAL(STATE_10,encoder_test.state) ; 
-// }
 
+/***************************************
+*   TEST DE CONTEO DE PULSOS           * 
+*   IDA Y VUELTA                       *     
+***************************************/
 
+void test_count_pulses_cw2ccw_st00(void){
+    int16_t pulses_cw = (int16_t)PULSES_COUNT_CW2 ; 
+    int16_t pulses_ccw = (int16_t)PULSES_COUNT_CCW2 ;
+    int16_t pulses_count = 0 ;  
+    int16_t count_pulses = pulses_cw - pulses_ccw ; 
+    time_us_64_IgnoreAndReturn(35) ;        
+    initialState(STATE_00)  ;   /// generate pulses 
+    setPortsInit(PORTA,PORTB) ; 
+    setZero() ; 
+    /// gira pulses_cw iniciando y terminando en el mismo punto inicial
+    for (pulses_count = 0; pulses_count<pulses_cw;pulses_count++){ 
+        // 00 TO 10 
+        //   setPortsInit(PORTA,PORTB) ;         
+        gpio_get_ExpectAndReturn(PORTB,0) ;
+        time_us_64_IgnoreAndReturn(35) ;    
+        gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_RISE); 
+        //10 TO 11 
+        gpio_get_ExpectAndReturn(PORTA,1) ; 
+        time_us_64_IgnoreAndReturn(35) ;    
+
+        gpio_callback_channel_ab(PORTB,(uint32_t)GPIO_IRQ_EDGE_RISE); 
+        // 11 TO 01 
+        gpio_get_ExpectAndReturn(PORTB,1) ; 
+        time_us_64_IgnoreAndReturn(35) ;    
+
+        gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_FALL); 
+        //01 TO 00 
+        gpio_get_ExpectAndReturn(PORTA,0) ; 
+        time_us_64_IgnoreAndReturn(35) ;    
+
+        gpio_callback_channel_ab(PORTB,(uint32_t)GPIO_IRQ_EDGE_FALL); 
+        resetTest() ;  ///clear memory test 
+    }
+
+    for (pulses_count = 0; pulses_count<pulses_ccw;pulses_count++){ 
+        // 00 TO 01 
+        gpio_get_ExpectAndReturn(PORTA,0) ;
+        time_us_64_IgnoreAndReturn(35) ;    
+        gpio_callback_channel_ab(PORTB,(uint32_t)GPIO_IRQ_EDGE_RISE); 
+        // 01 TO 11 
+        gpio_get_ExpectAndReturn(PORTB,1) ; 
+        time_us_64_IgnoreAndReturn(35) ;    
+        gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_RISE); 
+        //11 TO 10 
+        gpio_get_ExpectAndReturn(PORTA,1) ; 
+        time_us_64_IgnoreAndReturn(35) ;    
+        gpio_callback_channel_ab(PORTB,(uint32_t)GPIO_IRQ_EDGE_FALL); 
+        //10 TO 00 
+        gpio_get_ExpectAndReturn(PORTB,0) ; 
+        time_us_64_IgnoreAndReturn(35) ;    
+        gpio_callback_channel_ab(PORTA,(uint32_t)GPIO_IRQ_EDGE_FALL); 
+        resetTest() ;  ///clear memory test 
+    }
+    get_data_encoder(&encoder_test)   ; 
+    TEST_ASSERT_EQUAL(count_pulses,encoder_test.count_pulses) ; 
+    TEST_ASSERT_EQUAL(COUNTER_ANTICLOCKWISE,encoder_test.direction) ;
+    TEST_ASSERT_EQUAL(STATE_00,encoder_test.state) ; 
+} ; 
+//void test_count_pulses_cw2ccw_st00(void){} ; 
+//void test_count_pulses_cw2ccw_st00(void){} ; 
+//void test_count_pulses_cw2ccw_st00(void){} ; 

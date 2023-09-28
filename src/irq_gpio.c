@@ -122,7 +122,6 @@ static void fsm_encoder(const state_quad_enc_t new_state){
                 }
             }else if (new_state == STATE_00){
                 encoder.state = new_state ; 
-
                 if (encoder.direction == COUNTER_STILL){
                     encoder.direction = COUNTER_ANTICLOCKWISE ; 
                     clock_speed = time_us_64() ; 
