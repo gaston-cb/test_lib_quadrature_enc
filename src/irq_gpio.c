@@ -85,6 +85,7 @@ static void fsm_encoder(const state_quad_enc_t new_state){
                     count_state = 0 ; 
                 }else if (encoder.direction ==COUNTER_CLOCKWISE){ 
                     encoder.direction = COUNTER_ANTICLOCKWISE ; 
+                    count_state = 0 ; 
                 }
 
                 count_state++ ; 
@@ -250,7 +251,8 @@ void gpio_callback_channel_ab(uint gpio,uint32_t event_mask ) {
     if (gpio == (uint)_port_channel_a){
         new_state = (uint8_t )gpio_get(_port_channel_b) ; 
         if (event_mask == GPIO_IRQ_EDGE_FALL){ 
-            new_state = 0<<1 | new_state; 
+            new_state = 0<<1 | new_state ;//new_state; 
+            
         }else if(event_mask == GPIO_IRQ_EDGE_RISE) {
             new_state = 1<<1 | new_state ; 
         }
